@@ -1,0 +1,12 @@
+{
+  "showBrowser": true,
+  "maximizeWindow": true,
+  "browserSpeed": "fast",
+  "postDelay": 5,
+  "manualPostWait": 20,
+  "autoRetry": true,
+  "skipOnError": false,
+  "closeOnComplete": true,
+  "detailedLogs": true,
+  "saveLogsToFile": false
+}

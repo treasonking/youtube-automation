@@ -1,0 +1,2510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 게시물 자동화 도구</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .post-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .post-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-content {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .post-content h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .post-content p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2em;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .setting-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .setting-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .logs {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .logs h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .help-text {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1565c0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .automation-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .automation-controls .btn {
+            flex: 1;
+        }
+
+        /* 📸🎬 미디어 업로드 스타일 */
+        .media-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px dashed #667eea;
+        }
+
+        .media-upload-group {
+            margin-bottom: 20px;
+        }
+
+        .media-upload-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .media-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .selected-media {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .media-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            border: 2px solid #e9ecef;
+        }
+
+        .media-item img {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .media-item .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .media-item .remove-btn:hover {
+            background: #ff3742;
+            transform: scale(1.1);
+        }
+
+        .video-results {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e9ecef;
+        }
+
+        .video-result-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .video-result-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .video-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .video-result-item img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 12px;
+        }
+
+        .video-result-info {
+            flex: 1;
+        }
+
+        .video-result-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .video-result-channel {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .video-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .video-item img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .video-item-info {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .video-item-title {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .video-item-channel {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 YouTube 자동화 Pro</h1>
+            <p>여러 게시물을 순차적으로 자동 작성해드립니다</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('accounts', event)">👥 계정 관리</button>
+            <button class="tab" onclick="switchTab('posts', event)">📝 게시물</button>
+            <button class="tab" onclick="switchTab('settings', event)">⚙️ 설정</button>
+            <button class="tab" onclick="switchTab('automation', event)">🚀 실행</button>
+        </div>
+
+        <!-- 계정 관리 탭 -->
+        <div id="accounts" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">👥 계정 관리</h3>
+                <div id="accountCount" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    💾 저장된 계정: 0개
+                </div>
+            </div>
+
+            <!-- 계정 추가 폼 -->
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 15px;">➕ 새 계정 추가</h4>
+                <form id="accountForm">
+                    <div class="form-group">
+                        <label for="accountName">계정명 (별칭) <span class="required">*</span></label>
+                        <input type="text" id="accountName" placeholder="예: 메인 계정, 서브 계정" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountUsername">YouTube 아이디 <span class="required">*</span></label>
+                        <input type="text" id="accountUsername" placeholder="YouTube 계정 아이디" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountPassword">비밀번호 <span class="required">*</span></label>
+                        <input type="password" id="accountPassword" placeholder="YouTube 계정 비밀번호" required>
+                        <div class="help-text">
+                            💡 <strong>2차 인증 사용 시:</strong> <a href="https://myaccount.google.com/apppasswords" target="_blank">Google 앱 비밀번호</a> 사용 권장
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountDescription">설명 (선택사항)</label>
+                        <textarea id="accountDescription" placeholder="계정에 대한 설명을 입력하세요..." rows="3"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="addAccount()">
+                            ➕ 계정 추가
+                        </button>
+                        <button id="cancelEditPostBtn" type="button" style="display:none;" onclick="cancelEditPost()">
+                            ❌ 취소
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 계정 목록 -->
+            <div class="post-list" id="accountList">
+                <p style="text-align: center; color: #666; font-style: italic;">
+                    아직 등록된 계정이 없습니다.<br>
+                    위에서 계정을 추가해보세요!
+                </p>
+            </div>
+        </div>
+
+        <!-- 게시물 관리 탭 -->
+        <div id="posts" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">📝 게시물 관리</h3>
+                <div id="postCount" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    💾 저장된 게시물: 0개
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="postAccount">사용할 계정 선택 <span class="required">*</span></label>
+                <select id="postAccount" required>
+                    <option value="">계정을 선택하세요</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="newPostContent">새 게시물 내용 <span class="required">*</span></label>
+                <textarea id="newPostContent" placeholder="게시할 내용을 입력하세요..."></textarea>
+            </div>
+
+            <!-- 📸🎬 미디어 추가 섹션 -->
+            <div class="media-section">
+                <h4 style="margin-bottom: 15px;">📸 미디어 추가</h4>
+                
+                <!-- 이미지 업로드 -->
+                <div class="media-upload-group">
+                    <label class="media-upload-btn" for="imageUpload">
+                        🖼️ 이미지 선택
+                        <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;" onchange="handleImageUpload(event)">
+                    </label>
+                    <div id="selectedImages" class="selected-media"></div>
+                </div>
+
+                <!-- 동영상 검색 -->
+                <div class="media-upload-group">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="videoSearch" placeholder="YouTube에서 동영상 검색..." style="flex: 1;" onkeypress="if(event.key==='Enter') searchVideos()">
+                        <button type="button" class="btn btn-secondary" onclick="searchVideos()">
+                            🔍 검색
+                        </button>
+                    </div>
+                    <div id="videoResults" class="video-results"></div>
+                    <div id="selectedVideos" class="selected-media"></div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button id="addPostBtn" type="button" onclick="addPost()">
+                    ➕ 게시물 추가
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="clearAllPosts()">
+                    🗑️ 전체 삭제
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="exportPosts()">
+                    💾 내보내기
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="importPosts()">
+                    📁 가져오기
+                </button>
+            </div>
+
+            <div class="post-list" id="postList">
+                <p style="text-align: center; color: #666; font-style: italic;">
+                    아직 등록된 게시물이 없습니다.<br>
+                    위에서 게시물을 추가해보세요!
+                </p>
+            </div>
+        </div>
+
+        <!-- 자동화 설정 탭 -->
+        <div id="settings" class="tab-content">
+            <div class="settings-grid">
+                <div class="setting-card">
+                    <h3>🖥️ 브라우저 설정</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showBrowser" checked>
+                        <label for="showBrowser">브라우저 화면 표시</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="maximizeWindow" checked>
+                        <label for="maximizeWindow">브라우저 최대화</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="browserSpeed">브라우저 속도</label>
+                        <select id="browserSpeed">
+                            <option value="fast">빠름 (권장)</option>
+                            <option value="normal">보통</option>
+                            <option value="slow">느림 (안정성 우선)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-card">
+                    <h3>⏱️ 대기 시간 설정</h3>
+                    <div class="form-group">
+                        <label for="postDelay">게시물 간 대기 시간 (초)</label>
+                        <input type="number" id="postDelay" value="5" min="1" max="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="manualPostWait">수동 게시 대기 시간 (초)</label>
+                        <input type="number" id="manualPostWait" value="20" min="10" max="120">
+                    </div>
+                </div>
+
+                <div class="setting-card">
+                    <h3>🔄 자동화 옵션</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoRetry" checked>
+                        <label for="autoRetry">실패 시 자동 재시도</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="skipOnError">
+                        <label for="skipOnError">오류 시 다음 게시물로 건너뛰기</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="closeOnComplete" checked>
+                        <label for="closeOnComplete">완료 후 브라우저 자동 종료</label>
+                    </div>
+                </div>
+
+                <div class="setting-card">
+                    <h3>📊 로그 설정</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="detailedLogs" checked>
+                        <label for="detailedLogs">상세 로그 표시</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="saveLogsToFile">
+                        <label for="saveLogsToFile">로그 파일로 저장</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-large" onclick="saveSettings()">
+                💾 설정 저장
+            </button>
+        </div>
+
+        <!-- 자동화 실행 탭 -->
+        <div id="automation" class="tab-content">
+            <div class="status" id="automationStatus">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="statusText">자동화 준비 완료</p>
+            </div>
+
+            <div class="automation-controls">
+                <button type="button" class="btn btn-success btn-large" id="startAutomation" onclick="startAutomation()">
+                    🚀 자동화 시작
+                </button>
+                <button type="button" class="btn btn-danger btn-large" id="stopAutomation" onclick="stopAutomation()" disabled>
+                    ⏹️ 자동화 중지
+                </button>
+                <button type="button" class="btn btn-secondary btn-large" onclick="resetAutomation()">
+                    🔄 초기화
+                </button>
+            </div>
+
+            <div class="logs" id="automationLogs">
+                <h3>📋 자동화 로그</h3>
+                <div id="logEntries">
+                    <div class="log-entry">자동화 시작을 기다리는 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게시물 수정 모달 -->
+    <div id="editPostModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ 게시물 수정</h3>
+                <button class="close-btn" onclick="closeEditPostModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editPostForm">
+                    <div class="form-group">
+                        <label for="editPostAccount">사용할 계정 선택 <span class="required">*</span></label>
+                        <select id="editPostAccount" required>
+                            <option value="">계정을 선택하세요</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPostContent">게시물 내용 <span class="required">*</span></label>
+                        <textarea id="editPostContent" placeholder="게시할 내용을 입력하세요..." rows="6" required></textarea>
+                    </div>
+
+                    <!-- 기존 이미지 -->
+                    <div class="form-group" id="editImagesSection">
+                        <label>📸 기존 이미지</label>
+                        <div id="editExistingImages" class="selected-media"></div>
+                    </div>
+
+                    <!-- 새 이미지 추가 -->
+                    <div class="form-group">
+                        <label class="media-upload-btn" for="editImageUpload">
+                            🖼️ 새 이미지 추가
+                            <input type="file" id="editImageUpload" accept="image/*" multiple style="display: none;" onchange="handleEditImageUpload(event)">
+                        </label>
+                        <div id="editNewImages" class="selected-media"></div>
+                    </div>
+
+                    <!-- 기존 동영상 -->
+                    <div class="form-group" id="editVideosSection">
+                        <label>🎬 기존 동영상</label>
+                        <div id="editExistingVideos" class="selected-media"></div>
+                    </div>
+
+                    <!-- 새 동영상 검색 -->
+                    <div class="form-group">
+                        <label>🎬 새 동영상 추가</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="editVideoSearch" placeholder="YouTube에서 동영상 검색..." style="flex: 1;" onkeypress="if(event.key==='Enter') searchEditVideos()">
+                            <button type="button" class="btn btn-secondary" onclick="searchEditVideos()">
+                                🔍 검색
+                            </button>
+                        </div>
+                        <div id="editVideoResults" class="video-results"></div>
+                        <div id="editNewVideos" class="selected-media"></div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-primary" onclick="saveEditedPost()">
+                            💾 수정 완료
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditPostModal()">
+                            ❌ 취소
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+       
+        // 전역 변수
+        let posts = [];
+        let accounts = [];
+        let currentPostIndex = 0;
+        let isAutomationRunning = false;
+        let automationSocket = null;
+        let selectedImages = [];
+        let selectedVideos = [];
+        let editingAccountId = null;
+        let editingPostId = null;
+        let editNewImages = [];
+        let editNewVideos = [];
+
+        // 탭 전환
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            if (event) event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+        window.switchTab = switchTab;
+
+        // 📸🎬 이미지 업로드 처리 (multer + multipart/form-data)
+        async function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    try {
+                        const res = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        if (data.success && data.url) {
+                            selectedImages.push({ url: data.url, name: file.name, type: 'image' });
+                            updateSelectedImages();
+                        } else {
+                            alert('이미지 업로드 실패: ' + (data.error || '서버 오류'));
+                        }
+                    } catch (err) {
+                        alert('이미지 업로드 중 오류 발생');
+                    }
+                }
+            }
+        }
+
+        // 📸 선택된 이미지 표시 업데이트
+        function updateSelectedImages() {
+            const container = document.getElementById('selectedImages');
+            if (selectedImages.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = selectedImages.map(img => `
+                <div class="media-item">
+                    <img src="${img.url}" alt="${img.name}">
+                    <button class="remove-btn" onclick="removeImage('${img.url}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 📸 이미지 제거
+        function removeImage(imageUrl) {
+            selectedImages = selectedImages.filter(img => img.url !== imageUrl);
+            updateSelectedImages();
+        }
+
+        // 🎬 YouTube 동영상 검색 (앱용 - 클라이언트 직접 처리)
+        async function searchVideos() {
+            const query = document.getElementById('videoSearch').value.trim();
+            if (!query) {
+                alert('검색어를 입력해주세요.');
+                return;
+            }
+            const resultsContainer = document.getElementById('videoResults');
+            resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">🔍 검색 중...</div>';
+            try {
+                // 서버 API로 실제 검색
+                const res = await fetch(`/api/search-videos?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.videos)) {
+                    displayVideoResults(data.videos);
+                } else {
+                    resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff4757;">❌ 검색 결과가 없습니다.</div>';
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff4757;">❌ 검색 중 오류가 발생했습니다.</div>';
+                console.error('Video search error:', error);
+            }
+        }
+
+        // 🎬 동영상 검색 결과 표시
+        function displayVideoResults(videos) {
+            const container = document.getElementById('videoResults');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">검색 결과가 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = videos.map(video => `
+                <div class="video-result-item" onclick="selectVideo('${video.id}', '${video.title}', '${video.channel}', '${video.thumbnail}')">
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <div class="video-result-info">
+                        <div class="video-result-title">${video.title}</div>
+                        <div class="video-result-channel">${video.channel}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 🎬 동영상 선택
+        function selectVideo(videoId, title, channel, thumbnail) {
+            const videoData = {
+                id: videoId,
+                title: title,
+                channel: channel,
+                thumbnail: thumbnail,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            };
+            
+            // 중복 선택 방지
+            if (!selectedVideos.find(v => v.id === videoId)) {
+                selectedVideos.push(videoData);
+                updateSelectedVideos();
+                
+                // 검색 결과 숨기기
+                document.getElementById('videoResults').innerHTML = '';
+                document.getElementById('videoSearch').value = '';
+            }
+        }
+
+        // 🎬 선택된 동영상 표시 업데이트
+        function updateSelectedVideos() {
+            const container = document.getElementById('selectedVideos');
+            
+            if (selectedVideos.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = selectedVideos.map(video => `
+                <div class="video-item">
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <div class="video-item-info">
+                        <div class="video-item-title">${video.title}</div>
+                        <div class="video-item-channel">${video.channel}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeVideo('${video.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 🎬 동영상 제거
+        function removeVideo(videoId) {
+            selectedVideos = selectedVideos.filter(video => video.id !== videoId);
+            updateSelectedVideos();
+        }
+
+        // 게시물 추가 (이미지는 url만 포함)
+        async function addPost() {
+            const content = document.getElementById('newPostContent').value.trim();
+            const accountId = document.getElementById('postAccount').value;
+            if (!content) {
+                alert('게시물 내용을 입력하세요.');
+                return;
+            }
+            if (!accountId) {
+                alert('계정을 선택하세요.');
+                return;
+            }
+            const account = accounts.find(acc => acc.id === accountId);
+            const images = selectedImages.map(img => ({ url: img.url, name: img.name, type: 'image' }));
+            const videos = [...selectedVideos];
+            const postData = {
+                content,
+                accountId,
+                username: account ? account.username : '',
+                password: account ? account.password : '',
+                images,
+                videos,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(postData)
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert('게시물이 추가되었습니다.');
+                await loadAllAndUpdatePosts();
+                document.getElementById('newPostContent').value = '';
+                document.getElementById('postAccount').selectedIndex = 0;
+                selectedImages = [];
+                selectedVideos = [];
+                updateSelectedImages();
+                updateSelectedVideos();
+            } else {
+                alert('게시물 추가 실패');
+            }
+        }
+
+        // 게시물 목록 업데이트 (💾 개수 표시 포함)
+        function updatePostList() {
+            const postList = document.getElementById('postList');
+            const postCount = document.getElementById('postCount');
+            
+            // 💾 게시물 개수 업데이트
+            const completedCount = posts.filter(p => p.status === 'completed').length;
+            const failedCount = posts.filter(p => p.status === 'failed').length;
+            const pendingCount = posts.filter(p => p.status === 'pending').length;
+            
+            postCount.innerHTML = `💾 저장된 게시물: ${posts.length}개 
+                ${completedCount > 0 ? `(✅${completedCount}` : ''}
+                ${failedCount > 0 ? ` ❌${failedCount}` : ''}
+                ${pendingCount > 0 ? ` ⏳${pendingCount}` : ''}
+                ${completedCount > 0 || failedCount > 0 || pendingCount > 0 ? ')' : ''}`;
+            
+            if (posts.length === 0) {
+                postList.innerHTML = `
+                    <p style="text-align: center; color: #666; font-style: italic;">
+                        아직 등록된 게시물이 없습니다.<br>
+                        위에서 게시물을 추가해보세요!
+                    </p>
+                `;
+                return;
+            }
+            
+            postList.innerHTML = posts.map((post, index) => {
+                const imageCount = post.images ? post.images.length : 0;
+                const videoCount = post.videos ? post.videos.length : 0;
+                const mediaInfo = [];
+                
+                if (imageCount > 0) mediaInfo.push(`📸 ${imageCount}개`);
+                if (videoCount > 0) mediaInfo.push(`🎬 ${videoCount}개`);
+                
+                return `
+                <div class="post-item">
+                    <div class="post-content">
+                        <h4>게시물 ${index + 1} ${mediaInfo.length > 0 ? `(${mediaInfo.join(', ')})` : ''}</h4>
+                        <p>${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}</p>
+                        <small>상태: ${getStatusText(post.status)}</small>
+                        ${post.account ? `<div style="margin-top: 4px; color: #28a745; font-size: 12px;">👤 계정: ${post.account.name} (${post.account.username})</div>` : ''}
+                        ${mediaInfo.length > 0 ? `<div style="margin-top: 8px; color: #667eea; font-size: 12px;">📎 미디어: ${mediaInfo.join(', ')}</div>` : ''}
+                    </div>
+                    <div class="post-actions">
+                        ${post.status === 'pending' || post.status === 'failed' ? 
+                            `<button class="btn btn-secondary" onclick="editPost('${post.id}')">수정</button>` : 
+                            `<button class="btn btn-secondary" disabled title="완료 또는 처리중인 게시물은 수정할 수 없습니다">수정</button>`
+                        }
+                        <button class="btn btn-danger" onclick="deletePost('${post.id}')">삭제</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 상태 텍스트 변환
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '대기 중',
+                'processing': '처리 중',
+                'completed': '완료',
+                'failed': '실패'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 게시물 삭제 (API 연동)
+        async function deletePost(postId) {
+            if (!confirm('이 게시물을 삭제하시겠습니까?')) return;
+            const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+            const result = await res.json();
+            if (result.success) {
+                alert('게시물이 삭제되었습니다.');
+                await loadAllAndUpdatePosts();
+            } else {
+                alert('게시물 삭제 실패');
+            }
+        }
+
+        // 게시물 수정 (💾 저장 기능 추가)
+        function editPost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) {
+                alert('게시물을 찾을 수 없습니다.');
+                return;
+            }
+            if (post.status === 'completed' || post.status === 'processing') {
+                alert('완료되었거나 처리중인 게시물은 수정할 수 없습니다.');
+                return;
+            }
+            openEditPostModal(post);
+        }
+
+        // 게시물 수정 모달 열기
+        function openEditPostModal(post) {
+            console.log(document.getElementById('editPostContent'))
+            editingPostId = post.id; // ← 이 줄이 반드시 필요!
+            // 계정 드롭다운 업데이트
+            updateEditAccountDropdown();
+            
+            // 기존 데이터 설정
+            document.getElementById('editPostContent').value = post.content;
+            
+            // 계정 선택
+            if (post.account) {
+                document.getElementById('editPostAccount').value = post.account.id;
+            }
+            
+            // 기존 이미지 표시
+            displayEditExistingImages(post.images || []);
+            
+            // 기존 동영상 표시
+            displayEditExistingVideos(post.videos || []);
+            
+            // 새로 추가할 미디어 초기화
+            editNewImages = [];
+            editNewVideos = [];
+            updateEditNewImages();
+            updateEditNewVideos();
+            
+            // 모달 표시
+            document.getElementById('editPostModal').style.display = 'flex';
+        }
+
+        // 게시물 수정 모달 닫기
+        function closeEditPostModal() {
+            document.getElementById('editPostModal').style.display = 'none';
+            editingPostId = null;
+            editNewImages = [];
+            editNewVideos = [];
+            
+            // 폼 초기화
+            document.getElementById('editPostForm').reset();
+            document.getElementById('editExistingImages').innerHTML = '';
+            document.getElementById('editExistingVideos').innerHTML = '';
+            document.getElementById('editNewImages').innerHTML = '';
+            document.getElementById('editNewVideos').innerHTML = '';
+            document.getElementById('editVideoResults').innerHTML = '';
+        }
+
+        // 수정용 계정 드롭다운 업데이트
+        function updateEditAccountDropdown() {
+            const editPostAccount = document.getElementById('editPostAccount');
+            
+            // 기존 옵션 제거 (첫 번째 옵션 제외)
+            while (editPostAccount.children.length > 1) {
+                editPostAccount.removeChild(editPostAccount.lastChild);
+            }
+
+            // 계정 옵션 추가
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `${account.name} (${account.username})`;
+                editPostAccount.appendChild(option);
+            });
+
+            // ❌ updateEditAccountDropdown();  // 이 줄을 반드시 삭제!
+        }
+
+        // 기존 이미지 표시
+        function displayEditExistingImages(images) {
+            const container = document.getElementById('editExistingImages');
+            
+            if (images.length === 0) {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">등록된 이미지가 없습니다.</p>';
+                return;
+            }
+            
+            container.innerHTML = images.map((img, index) => `
+                <div class="media-item">
+                    <img src="${img.data}" alt="${img.name}">
+                    <div class="media-item-info">
+                        <div class="media-item-title">${img.name}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeEditExistingImage(${index})" title="이미지 삭제">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 기존 동영상 표시
+        function displayEditExistingVideos(videos) {
+            const container = document.getElementById('editExistingVideos');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">등록된 동영상이 없습니다.</p>';
+                return;
+            }
+            
+            container.innerHTML = videos.map((video, index) => `
+                <div class="video-item">
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <div class="video-item-info">
+                        <div class="video-item-title">${video.title}</div>
+                        <div class="video-item-channel">${video.channel}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeEditExistingVideo(${index})" title="동영상 삭제">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 기존 이미지 삭제
+        function removeEditExistingImage(index) {
+            const post = posts.find(p => p.id === editingPostId);
+            if (post && post.images) {
+                post.images.splice(index, 1);
+                displayEditExistingImages(post.images);
+            }
+        }
+
+        // 기존 동영상 삭제
+        function removeEditExistingVideo(index) {
+            const post = posts.find(p => p.id === editingPostId);
+            if (post && post.videos) {
+                post.videos.splice(index, 1);
+                displayEditExistingVideos(post.videos);
+            }
+        }
+
+        // 수정용 새 이미지 업로드 처리
+        function handleEditImageUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            type: 'image',
+                            data: e.target.result,
+                            file: file
+                        };
+                        
+                        editNewImages.push(imageData);
+                        updateEditNewImages();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // 수정용 새 이미지 표시 업데이트
+        function updateEditNewImages() {
+            const container = document.getElementById('editNewImages');
+            
+            if (editNewImages.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = editNewImages.map(img => `
+                <div class="media-item">
+                    <img src="${img.data}" alt="${img.name}">
+                    <div class="media-item-info">
+                        <div class="media-item-title">${img.name}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeEditNewImage('${img.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 수정용 새 이미지 제거
+        function removeEditNewImage(imageId) {
+            editNewImages = editNewImages.filter(img => img.id !== imageId);
+            updateEditNewImages();
+        }
+
+        // 수정용 동영상 검색
+        async function searchEditVideos() {
+            const query = document.getElementById('editVideoSearch').value.trim();
+            if (!query) {
+                alert('검색어를 입력해주세요.');
+                return;
+            }
+            const resultsContainer = document.getElementById('editVideoResults');
+            resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">🔍 검색 중...</div>';
+            try {
+                // 서버 API로 실제 검색
+                const res = await fetch(`/api/search-videos?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.videos)) {
+                    displayEditVideoResults(data.videos);
+                } else {
+                    resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff4757;">❌ 검색 결과가 없습니다.</div>';
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff4757;">❌ 검색 중 오류가 발생했습니다.</div>';
+                console.error('Video search error:', error);
+            }
+        }
+
+        // 수정용 동영상 검색 결과 표시
+        function displayEditVideoResults(videos) {
+            const container = document.getElementById('editVideoResults');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">검색 결과가 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = videos.map(video => `
+                <div class="video-result-item" onclick="selectEditVideo('${video.id}', '${video.title}', '${video.channel}', '${video.thumbnail}')">
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <div class="video-result-info">
+                        <div class="video-result-title">${video.title}</div>
+                        <div class="video-result-channel">${video.channel}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 수정용 동영상 선택
+        function selectEditVideo(videoId, title, channel, thumbnail) {
+            const videoData = {
+                id: videoId,
+                title: title,
+                channel: channel,
+                thumbnail: thumbnail,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            };
+            
+            // 중복 선택 방지
+            if (!editNewVideos.find(v => v.id === videoId)) {
+                editNewVideos.push(videoData);
+                updateEditNewVideos();
+                
+                // 검색 결과 숨기기
+                document.getElementById('editVideoResults').innerHTML = '';
+                document.getElementById('editVideoSearch').value = '';
+            }
+        }
+
+        // 수정용 새 동영상 표시 업데이트
+        function updateEditNewVideos() {
+            const container = document.getElementById('editNewVideos');
+            
+            if (editNewVideos.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = editNewVideos.map(video => `
+                <div class="video-item">
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <div class="video-item-info">
+                        <div class="video-item-title">${video.title}</div>
+                        <div class="video-item-channel">${video.channel}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeEditNewVideo('${video.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 수정용 새 동영상 제거
+        function removeEditNewVideo(videoId) {
+            editNewVideos = editNewVideos.filter(video => video.id !== videoId);
+            updateEditNewVideos();
+        }
+
+        // 수정된 게시물 저장
+        async function saveEditedPost() {
+            console.log('editingPostId:', editingPostId);
+            console.log('posts:', posts.map(p => p.id));
+            alert('saveEditedPost called, editingPostId=' + editingPostId);
+            const content = document.getElementById('editPostContent').value.trim();
+            const selectedAccountId = document.getElementById('editPostAccount').value;
+            if (!content) {
+                alert('게시물 내용을 입력해주세요.');
+                return;
+            }
+            if (!selectedAccountId) {
+                alert('사용할 계정을 선택해주세요.');
+                return;
+            }
+            const selectedAccount = accounts.find(acc => acc.id === selectedAccountId);
+            if (!selectedAccount) {
+                alert('선택된 계정을 찾을 수 없습니다.');
+                return;
+            }
+            const post = posts.find(p => p.id === editingPostId);
+            if (!post) {
+                alert('수정할 게시물을 찾을 수 없습니다.');
+                return;
+            }
+            // 상태 체크 추가
+            if (post.status === 'completed' || post.status === 'processing') {
+                alert('완료되었거나 처리중인 게시물은 수정할 수 없습니다.');
+                closeEditPostModal();
+                return;
+            }
+            // 기존+새 이미지/동영상 합치기
+            let images = (post.images || []).concat(editNewImages);
+            let videos = (post.videos || []).concat(editNewVideos);
+            // 서버에 PUT 요청
+            const res = await fetch(`/api/posts/${editingPostId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content,
+                    accountId: selectedAccountId,
+                    images,
+                    videos
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert('게시물이 수정되었습니다.');
+                await loadAllAndUpdatePosts();
+                closeEditPostModal();
+            } else {
+                alert('게시물 수정 실패');
+            }
+        }
+
+        // 설정 저장
+        function saveSettings() {
+            const settings = {
+                showBrowser: document.getElementById('showBrowser').checked,
+                maximizeWindow: document.getElementById('maximizeWindow').checked,
+                browserSpeed: document.getElementById('browserSpeed').value,
+                postDelay: parseInt(document.getElementById('postDelay').value),
+                manualPostWait: parseInt(document.getElementById('manualPostWait').value),
+                autoRetry: document.getElementById('autoRetry').checked,
+                skipOnError: document.getElementById('skipOnError').checked,
+                closeOnComplete: document.getElementById('closeOnComplete').checked,
+                detailedLogs: document.getElementById('detailedLogs').checked,
+                saveLogsToFile: document.getElementById('saveLogsToFile').checked
+            };
+            // localStorage.setItem('automation_settings', JSON.stringify(settings)); // 삭제
+            showStatus('success', '설정이 저장되었습니다.');
+        }
+
+        // 자동화 시작
+        function startAutomation() {
+            if (posts.length === 0) {
+                alert('먼저 게시물을 추가해주세요.');
+                return;
+            }
+            // 처리할 게시물 필터링 (완료되지 않은 게시물만)
+            const pendingPosts = posts.filter(post => post.status !== 'completed');
+            if (pendingPosts.length === 0) {
+                alert('처리할 게시물이 없습니다.\n모든 게시물이 이미 완료되었습니다.');
+                return;
+            }
+            // 각 post에 account를 동적으로 매핑
+            pendingPosts.forEach(post => {
+                post.account = accounts.find(acc => acc.id === post.accountId) || null;
+            });
+            // 계정이 설정되지 않은 게시물이 있는지 확인 (완료되지 않은 게시물 중에서)
+            const postsWithoutAccount = pendingPosts.filter(post => !post.account);
+            if (postsWithoutAccount.length > 0) {
+                alert(`${postsWithoutAccount.length}개의 게시물에 계정이 설정되지 않았습니다.\n계정 관리 탭에서 계정을 추가하고 게시물에 계정을 설정해주세요.`);
+                switchTab('accounts');
+                return;
+            }
+            
+            // 처리할 게시물 개수 알림
+            const completedCount = posts.filter(post => post.status === 'completed').length;
+            if (completedCount > 0) {
+                addLog(`📋 총 ${posts.length}개 게시물 중 ${completedCount}개는 이미 완료되어 건너뜁니다.`);
+                addLog(`🎯 ${pendingPosts.length}개 게시물을 처리합니다.`);
+            }
+            
+            isAutomationRunning = true;
+            currentPostIndex = 0;
+            
+            document.getElementById('startAutomation').disabled = true;
+            document.getElementById('stopAutomation').disabled = false;
+            
+            showStatus('info', '자동화를 시작합니다...');
+            addLog('🚀 자동화 시작');
+            
+            processNextPost();
+        }
+
+        // 다음 게시물 처리
+        function processNextPost() {
+            if (!isAutomationRunning) {
+                completeAutomation();
+                return;
+            }
+            
+            // 완료되지 않은 다음 게시물 찾기
+            while (currentPostIndex < posts.length) {
+                const post = posts[currentPostIndex];
+                
+                // 이미 완료된 게시물은 건너뛰기
+                if (post.status === 'completed') {
+                    addLog(`✅ 게시물 ${currentPostIndex + 1}은 이미 완료되어 건너뜁니다.`);
+                    currentPostIndex++;
+                    continue;
+                }
+                
+                // 처리할 게시물 발견
+                post.status = 'processing';
+                updatePostList();
+                break;
+            }
+            
+            // 모든 게시물 처리 완료
+            if (currentPostIndex >= posts.length) {
+                completeAutomation();
+                return;
+            }
+            
+            const post = posts[currentPostIndex];
+            
+            // 실제 처리할 게시물 개수 기준으로 진행률 계산
+            const totalPendingPosts = posts.filter(p => p.status !== 'completed').length;
+            const processedPosts = posts.slice(0, currentPostIndex + 1).filter(p => p.status === 'processing' || p.status === 'completed').length;
+            const progress = (processedPosts / Math.max(totalPendingPosts, 1)) * 100;
+            
+            updateProgress(progress, `게시물 ${currentPostIndex + 1}/${posts.length} 처리 중... (처리 대상: ${totalPendingPosts}개)`);
+            
+            addLog(`📝 게시물 ${currentPostIndex + 1} 처리 시작`);
+            
+            // 실제 자동화 실행 (📸🎬 미디어 포함)
+            const settings = JSON.parse(localStorage.getItem('automation_settings') || '{}');
+            const imageCount = post.images ? post.images.length : 0;
+            const videoCount = post.videos ? post.videos.length : 0;
+            
+            addLog(`📸 이미지 ${imageCount}개, 🎬 동영상 ${videoCount}개 포함`);
+            addLog(`🚀 실제 자동화 시작 - Python 스크립트 실행 중...`);
+            
+            // 실제 자동화 API 호출 (단일 게시물 API 사용)
+            const automationData = {
+                username: post.account ? post.account.username : localStorage.getItem('youtube_username'),
+                password: post.account ? post.account.password : localStorage.getItem('youtube_password'),
+                postContent: post.content,
+                images: post.images || [],
+                videos: post.videos || [],
+                settings: settings,
+                postIndex: currentPostIndex,
+                // 계정 정보 추가 (다중 계정 지원)
+                accountUsername: post.accountUsername || '',
+                accountPassword: post.accountPassword || ''
+            };
+
+            // 🔧 데이터 정리 함수 - 직렬화 불가능한 객체를 안전한 형태로 변환
+            function sanitizeAutomationData(data) {
+                const result = { ...data };
+                
+                // 이미지 데이터 정리
+                if (result.images && Array.isArray(result.images)) {
+                    result.images = result.images.map((img, idx) => {
+                        console.log(`🔧 이미지 ${idx} 정리 중:`, typeof img, img?.constructor?.name);
+                        
+                        if (img instanceof File) {
+                            console.warn(`⚠️ File 객체 발견 - 제거됨`);
+                            return null;
+                        } else if (img instanceof Blob) {
+                            console.warn(`⚠️ Blob 객체 발견 - 제거됨`);
+                            return null;
+                        } else if (img && typeof img === 'object') {
+                            // 일반 객체인 경우 data 속성만 유지
+                            const cleaned = {};
+                            Object.keys(img).forEach(key => {
+                                const value = img[key];
+                                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                                    cleaned[key] = value;
+                                } else if (value instanceof File || value instanceof Blob) {
+                                    console.warn(`⚠️ ${key}에 File/Blob 객체 발견 - 제거됨`);
+                                } else {
+                                    try {
+                                        JSON.stringify(value);
+                                        cleaned[key] = value;
+                                    } catch (e) {
+                                        console.warn(`⚠️ ${key} 직렬화 불가능 - 제거됨`);
+                                    }
+                                }
+                            });
+                            return cleaned;
+                        }
+                        return img;
+                    }).filter(img => img !== null);
+                }
+                
+                // 동영상 데이터 정리
+                if (result.videos && Array.isArray(result.videos)) {
+                    result.videos = result.videos.map(vid => {
+                        if (vid instanceof File || vid instanceof Blob) {
+                            console.warn(`⚠️ 동영상에 File/Blob 객체 발견 - 제거됨`);
+                            return null;
+                        }
+                        return vid;
+                    }).filter(vid => vid !== null);
+                }
+                
+                // 최종 직렬화 테스트
+                try {
+                    JSON.stringify(result);
+                    console.log('✅ 데이터 정리 완료 - 직렬화 가능');
+                } catch (e) {
+                    console.error('❌ 데이터 정리 후에도 직렬화 불가능:', e);
+                }
+                
+                return result;
+            }
+
+            // 🔍 디버깅: 데이터 타입 및 직렬화 검사
+            console.log('🚀 자동화 데이터 전송 - 디버깅 시작');
+            console.log('📊 데이터 타입 검사:');
+            console.log('- username type:', typeof automationData.username, 'value:', automationData.username);
+            console.log('- password type:', typeof automationData.password, 'length:', automationData.password?.length);
+            console.log('- postContent type:', typeof automationData.postContent, 'length:', automationData.postContent?.length);
+            console.log('- images type:', typeof automationData.images, 'length:', automationData.images?.length);
+            console.log('- videos type:', typeof automationData.videos, 'length:', automationData.videos?.length);
+            console.log('- settings type:', typeof automationData.settings, 'value:', automationData.settings);
+            console.log('- postIndex type:', typeof automationData.postIndex, 'value:', automationData.postIndex);
+            
+            // 이미지 데이터 상세 검사
+            if (automationData.images && automationData.images.length > 0) {
+                console.log('📸 이미지 데이터 상세:');
+                automationData.images.forEach((img, idx) => {
+                    console.log(`  이미지 ${idx}:`, {
+                        type: typeof img,
+                        hasData: img && 'data' in img,
+                        dataType: img?.data ? typeof img.data : 'none',
+                        dataLength: img?.data ? img.data.length : 0,
+                        keys: img ? Object.keys(img) : [],
+                        isFile: img instanceof File,
+                        isBlob: img instanceof Blob
+                    });
+                });
+            }
+            
+            // 동영상 데이터 상세 검사
+            if (automationData.videos && automationData.videos.length > 0) {
+                console.log('🎬 동영상 데이터 상세:');
+                automationData.videos.forEach((vid, idx) => {
+                    console.log(`  동영상 ${idx}:`, {
+                        type: typeof vid,
+                        hasUrl: vid && 'url' in vid,
+                        urlType: vid?.url ? typeof vid.url : 'none',
+                        keys: vid ? Object.keys(vid) : [],
+                        isFile: vid instanceof File,
+                        isBlob: vid instanceof Blob
+                    });
+                });
+            }
+            
+            // JSON 직렬화 테스트
+            try {
+                const testSerialization = JSON.stringify(automationData);
+                console.log('✅ JSON 직렬화 성공, 크기:', testSerialization.length);
+            } catch (serError) {
+                console.error('❌ JSON 직렬화 실패:', serError);
+                console.log('🔍 직렬화 실패 원인 분석...');
+                
+                // 각 속성별로 직렬화 테스트
+                Object.keys(automationData).forEach(key => {
+                    try {
+                        JSON.stringify(automationData[key]);
+                        console.log(`✅ ${key}: 직렬화 가능`);
+                    } catch (err) {
+                        console.error(`❌ ${key}: 직렬화 불가능`, err);
+                    }
+                });
+            }
+            
+            // Electron의 ipcRenderer를 통해 메인 프로세스에 요청
+            let automationPromise;
+            
+            // 항상 fetch로 서버 API 호출 (웹/Electron 통일)
+            automationPromise = fetch('/api/automate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(automationData)
+            }).then(response => response.json());
+            
+            automationPromise
+            .then(async (data) => {
+                if (data.success) {
+                    post.status = 'completed';
+                    await patchPostStatus(post.id, 'completed');
+                    addLog(`✅ 게시물 ${currentPostIndex + 1} 완료`);
+                } else {
+                    post.status = 'failed';
+                    await patchPostStatus(post.id, 'failed');
+                    addLog(`❌ 게시물 ${currentPostIndex + 1} 실패: ${data.error}`);
+                }
+                
+                // 💾 상태 변경 후 자동 저장
+                savePosts();
+                updatePostList();
+                currentPostIndex++;
+                
+                // 다음 게시물로 이동 (딜레이 후)
+                const delay = parseInt(document.getElementById('postDelay').value) * 1000;
+                setTimeout(() => {
+                    if (isAutomationRunning) {
+                        processNextPost();
+                    }
+                }, delay);
+            })
+            .catch(error => {
+                console.error('🔍 [FRONTEND] 자동화 오류 상세:', error);
+                console.error('🔍 [FRONTEND] 오류 타입:', typeof error);
+                console.error('🔍 [FRONTEND] 오류 이름:', error.name);
+                console.error('🔍 [FRONTEND] 오류 메시지:', error.message);
+                console.error('🔍 [FRONTEND] 오류 스택:', error.stack);
+                
+                // 클론 오류 특별 처리
+                if (error.message && error.message.includes('cloned')) {
+                    console.error('🔍 [FRONTEND] 클론 오류 감지!');
+                    console.error('🔍 [FRONTEND] 현재 게시물 데이터:', post);
+                    
+                    // 이미지 데이터 상세 분석
+                    if (post.images && post.images.length > 0) {
+                        console.error('🔍 [FRONTEND] 이미지 데이터 상세 분석:');
+                        post.images.forEach((img, idx) => {
+                            console.error(`  이미지 ${idx}:`, {
+                                type: typeof img,
+                                isFile: img instanceof File,
+                                isBlob: img instanceof Blob,
+                                isArrayBuffer: img instanceof ArrayBuffer,
+                                constructor: img?.constructor?.name,
+                                keys: Object.keys(img || {}),
+                                hasData: img && 'data' in img,
+                                dataType: img?.data ? typeof img.data : 'none',
+                                dataLength: img?.data ? img.data.length : 0,
+                                dataStartsWith: img?.data ? img.data.substring(0, 50) : 'none'
+                            });
+                            
+                            // 각 속성별 직렬화 테스트
+                            if (img && typeof img === 'object') {
+                                Object.keys(img).forEach(key => {
+                                    try {
+                                        JSON.stringify(img[key]);
+                                        console.error(`    ✅ ${key}: 직렬화 가능`);
+                                    } catch (serErr) {
+                                        console.error(`    ❌ ${key}: 직렬화 불가능`, serErr.message);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 동영상 데이터도 확인
+                    if (post.videos && post.videos.length > 0) {
+                        console.error('🔍 [FRONTEND] 동영상 데이터 상세 분석:');
+                        post.videos.forEach((vid, idx) => {
+                            console.error(`  동영상 ${idx}:`, {
+                                type: typeof vid,
+                                isFile: vid instanceof File,
+                                isBlob: vid instanceof Blob,
+                                constructor: vid?.constructor?.name,
+                                keys: Object.keys(vid || {})
+                            });
+                        });
+                    }
+                    
+                    // settings 객체도 확인
+                    console.error('🔍 [FRONTEND] settings 객체 분석:', {
+                        type: typeof settings,
+                        keys: Object.keys(settings || {}),
+                        values: settings
+                    });
+                }
+                
+                post.status = 'failed';
+                addLog(`❌ 게시물 ${currentPostIndex + 1} 오류: ${error.message}`);
+                
+                // 💾 상태 변경 후 자동 저장
+                savePosts();
+                updatePostList();
+                
+                currentPostIndex++;
+                setTimeout(() => {
+                    if (isAutomationRunning) {
+                        processNextPost();
+                    }
+                }, 2000);
+            });
+        }
+
+        // 자동화 완료
+        function completeAutomation() {
+            isAutomationRunning = false;
+            
+            document.getElementById('startAutomation').disabled = false;
+            document.getElementById('stopAutomation').disabled = true;
+            
+            const completedCount = posts.filter(p => p.status === 'completed').length;
+            const failedCount = posts.filter(p => p.status === 'failed').length;
+            
+            updateProgress(100, `완료: ${completedCount}개, 실패: ${failedCount}개`);
+            showStatus('success', `자동화 완료! 성공: ${completedCount}개, 실패: ${failedCount}개`);
+            addLog(`🎉 자동화 완료 - 성공: ${completedCount}개, 실패: ${failedCount}개`);
+        }
+
+        // 자동화 중지
+        function stopAutomation() {
+            isAutomationRunning = false;
+            
+            document.getElementById('startAutomation').disabled = false;
+            document.getElementById('stopAutomation').disabled = true;
+            
+            showStatus('info', '자동화가 중지되었습니다.');
+            addLog('⏹️ 자동화 중지됨');
+        }
+
+        // 초기화 (💾 상태 저장 포함)
+        function resetAutomation() {
+            const completedCount = posts.filter(post => post.status === 'completed').length;
+            
+            if (completedCount > 0) {
+                const resetAll = confirm(
+                    `완료된 게시물이 ${completedCount}개 있습니다.\n\n` +
+                    `"확인": 모든 게시물을 대기 상태로 초기화\n` +
+                    `"취소": 완료된 게시물은 유지하고 실패/처리중인 게시물만 초기화`
+                );
+                
+                if (resetAll) {
+                    // 모든 게시물을 대기 상태로 초기화
+                    posts.forEach(post => post.status = 'pending');
+                    addLog('🔄 모든 게시물이 대기 상태로 초기화되었습니다.');
+                } else {
+                    // 완료된 게시물은 유지하고 나머지만 초기화
+                    posts.forEach(post => {
+                        if (post.status !== 'completed') {
+                            post.status = 'pending';
+                        }
+                    });
+                    addLog(`🔄 완료된 ${completedCount}개 게시물은 유지하고 나머지만 초기화되었습니다.`);
+                }
+            } else {
+                // 완료된 게시물이 없으면 모든 게시물 초기화
+                posts.forEach(post => post.status = 'pending');
+                addLog('🔄 모든 게시물이 대기 상태로 초기화되었습니다.');
+            }
+            
+            currentPostIndex = 0;
+            
+            // 💾 상태 초기화 후 저장
+            savePosts();
+            
+            updatePostList();
+            updateProgress(0, '자동화 준비 완료');
+            clearLogs();
+            showStatus('info', '자동화가 초기화되고 저장되었습니다! 💾');
+        }
+
+        // 진행률 업데이트
+        function updateProgress(percentage, text) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('statusText').textContent = text;
+        }
+
+        // 로그 추가
+        function addLog(message) {
+            const logEntries = document.getElementById('logEntries');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logEntries.appendChild(logEntry);
+            
+            // 스크롤을 맨 아래로
+            logEntries.scrollTop = logEntries.scrollHeight;
+        }
+
+        // 로그 초기화
+        function clearLogs() {
+            document.getElementById('logEntries').innerHTML = '<div class="log-entry">자동화 시작을 기다리는 중...</div>';
+        }
+
+        // 💾 게시물 저장 함수
+        function savePosts() {
+            try {
+                // localStorage.setItem('youtube_posts', JSON.stringify(posts)); // 삭제
+                console.log('게시물 저장 완료:', posts.length + '개');
+            } catch (error) {
+                console.error('게시물 저장 실패:', error);
+                alert('게시물 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.');
+            }
+        }
+
+        // 💾 게시물 불러오기 함수 (API 연동)
+        async function loadPosts() {
+            try {
+                const res = await fetch('/api/posts');
+                if (!res.ok) throw new Error('게시물 목록 불러오기 실패');
+                posts = await res.json();
+                updatePostList();
+                if (posts.length > 0) {
+                    showStatus('info', `저장된 게시물 ${posts.length}개를 불러왔습니다! 💾`);
+                }
+            } catch (error) {
+                console.error('게시물 불러오기 실패:', error);
+                if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    alert('게시물 불러오기 실패: 앱을 반드시 Electron(아이콘 더블클릭 또는 npm run electron)으로 실행하세요. 브라우저에서 직접 열면 동작하지 않습니다.');
+                }
+                posts = [];
+            }
+        }
+
+        // ========================================
+        // 👥 계정 관리 함수들
+        // ========================================
+
+        // 💾 계정 저장 함수
+        function saveAccounts() {
+            try {
+                localStorage.setItem('youtube_accounts', JSON.stringify(accounts));
+                console.log('계정 저장 완료:', accounts.length + '개');
+                updateAccountCount();
+            } catch (error) {
+                console.error('계정 저장 실패:', error);
+                alert('계정 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.');
+            }
+        }
+
+        // 💾 계정 불러오기 함수
+        async function loadAccounts() {
+            try {
+                const res = await fetch('/api/accounts');
+                if (!res.ok) throw new Error('계정 목록 불러오기 실패');
+                accounts = await res.json();
+                updateAccountList();
+                updateAccountDropdown();
+                updateAccountCount();
+            } catch (error) {
+                console.error('계정 불러오기 실패:', error);
+                if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    alert('계정 불러오기 실패: 앱을 반드시 Electron(아이콘 더블클릭 또는 npm run electron)으로 실행하세요. 브라우저에서 직접 열면 동작하지 않습니다.');
+                }
+                accounts = [];
+            }
+        }
+
+        // 계정 추가 (API 연동)
+        async function addAccount() {
+            const name = document.getElementById('accountName').value.trim();
+            const username = document.getElementById('accountUsername').value.trim();
+            const password = document.getElementById('accountPassword').value.trim();
+            const description = document.getElementById('accountDescription').value.trim();
+            if (!name || !username || !password) {
+                alert('계정명, 아이디, 비밀번호는 필수 입력 항목입니다.');
+                return;
+            }
+            const accountData = { name, username, password, description };
+            const result = await addAccountAPI(accountData);
+            if (result.success) {
+                alert('계정이 추가되었습니다.');
+                loadAccounts();
+                clearAccountForm();
+            } else {
+                alert('계정 추가 실패');
+            }
+        }
+
+        // 계정 수정
+        function editAccount(accountId) {
+            const account = accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            editingAccountId = accountId;
+            
+            // 폼에 기존 데이터 설정
+            document.getElementById('accountName').value = account.name;
+            document.getElementById('accountUsername').value = account.username;
+            document.getElementById('accountPassword').value = account.password;
+            document.getElementById('accountDescription').value = account.description;
+
+            // UI 변경
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            document.querySelector('#accountForm button[onclick="addAccount()"]').textContent = '💾 계정 수정';
+
+            // 계정 관리 탭으로 이동
+            switchTab('accounts');
+            
+            // 폼으로 스크롤
+            document.getElementById('accountForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 계정 삭제 (API 연동)
+        async function deleteAccount(accountId) {
+            if (!confirm('정말로 삭제하시겠습니까?')) return;
+            const res = await fetch(`/api/accounts/${accountId}`, { method: 'DELETE' });
+            const result = await res.json();
+            if (result.success) {
+                alert('계정이 삭제되었습니다.');
+                loadAccounts();
+            } else {
+                alert('계정 삭제 실패');
+            }
+        }
+
+        // 계정 폼 초기화
+        function clearAccountForm() {
+            document.getElementById('accountForm').reset();
+            editingAccountId = null;
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.querySelector('#accountForm button[onclick="addAccount()"]').textContent = '➕ 계정 추가';
+        }
+
+        // 계정 목록 업데이트
+        function updateAccountList() {
+            const accountList = document.getElementById('accountList');
+            
+            if (accounts.length === 0) {
+                accountList.innerHTML = `
+                    <p style="text-align: center; color: #666; font-style: italic;">
+                        아직 등록된 계정이 없습니다.<br>
+                        위에서 계정을 추가해보세요!
+                    </p>
+                `;
+                return;
+            }
+
+            accountList.innerHTML = accounts.map(account => `
+                <div class="post-item">
+                    <div class="post-content">
+                        <h4>👤 ${account.name}</h4>
+                        <p><strong>아이디:</strong> ${account.username}</p>
+                        <p><strong>비밀번호:</strong> ${'*'.repeat(account.password.length)}</p>
+                        ${account.description ? `<p><strong>설명:</strong> ${account.description}</p>` : ''}
+                        <p style="font-size: 12px; color: #999;">
+                            생성일: ${new Date(account.createdAt).toLocaleString('ko-KR')}
+                        </p>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn btn-secondary" onclick="editAccount('${account.id}')">
+                            ✏️ 수정
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteAccount('${account.id}')">
+                            🗑️ 삭제
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 계정 드롭다운 업데이트
+        function updateAccountDropdown() {
+            const postAccount = document.getElementById('postAccount');
+            // 기존 옵션 제거 (첫 번째 옵션 제외)
+            while (postAccount.children.length > 1) {
+                postAccount.removeChild(postAccount.lastChild);
+            }
+            // 계정 옵션 추가
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `${account.name} (${account.username})`;
+                postAccount.appendChild(option);
+            });
+            // updateEditAccountDropdown(); // 무한 재귀 방지 위해 제거
+        }
+
+        // 계정 개수 업데이트
+        function updateAccountCount() {
+            const accountCount = document.getElementById('accountCount');
+            if (accountCount) {
+                accountCount.textContent = `💾 저장된 계정: ${accounts.length}개`;
+            }
+        }
+
+        // 💾 모든 게시물 삭제 함수
+        function clearAllPosts() {
+            if (confirm('모든 게시물을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                posts = [];
+                savePosts();
+                updatePostList();
+                showStatus('success', '모든 게시물이 삭제되었습니다! 💾');
+            }
+        }
+
+        // 💾 게시물 내보내기 (백업)
+        function exportPosts() {
+            if (posts.length === 0) {
+                alert('내보낼 게시물이 없습니다.');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(posts, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `youtube_posts_${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showStatus('success', '게시물이 파일로 내보내졌습니다! 💾');
+        }
+
+        // 💾 게시물 가져오기 (복원)
+        function importPosts() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedPosts = JSON.parse(e.target.result);
+                        
+                        if (Array.isArray(importedPosts)) {
+                            if (posts.length > 0) {
+                                if (confirm('기존 게시물이 있습니다. 덮어쓰시겠습니까?')) {
+                                    posts = importedPosts;
+                                } else {
+                                    posts = posts.concat(importedPosts);
+                                }
+                            } else {
+                                posts = importedPosts;
+                            }
+                            
+                            savePosts();
+                            updatePostList();
+                            showStatus('success', `${importedPosts.length}개 게시물을 가져왔습니다! 💾`);
+                        } else {
+                            alert('올바른 게시물 파일이 아닙니다.');
+                        }
+                    } catch (error) {
+                        alert('파일을 읽는 중 오류가 발생했습니다.');
+                        console.error('Import error:', error);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // 상태 메시지 표시
+        function showStatus(type, message) {
+            const status = document.getElementById('automationStatus');
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        // 페이지 로드 시 초기화 (💾 저장된 데이터 불러오기)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Electron 환경이 아니면 경고
+            if (typeof window.electronAPI === 'undefined') {
+                alert('이 앱은 반드시 Electron으로 실행해야 합니다. 브라우저에서 직접 열면 동작하지 않습니다.');
+            }
+            loadAccounts();
+            loadPosts();
+            
+            // 저장된 설정 불러오기
+            const savedSettings = localStorage.getItem('automation_settings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                Object.keys(settings).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = settings[key];
+                        } else {
+                            element.value = settings[key];
+                        }
+                    }
+                });
+            }
+            
+            updatePostList();
+            
+            // 🔌 Electron 환경에서 실시간 로그 수신 설정
+            if (typeof window.electronAPI !== 'undefined') {
+                console.log('📱 Electron 앱 환경 감지');
+                
+                // 실시간 로그 수신
+                window.electronAPI.onAutomationLog((logData) => {
+                    const { postIndex, message, type } = logData;
+                    
+                    if (type === 'error') {
+                        addLog(`❌ [게시물 ${postIndex + 1}] ${message}`);
+                    } else {
+                        addLog(`📝 [게시물 ${postIndex + 1}] ${message}`);
+                    }
+                });
+            } else {
+                console.log('🌐 브라우저 환경 감지');
+            }
+        });
+
+        // 게시물 추가 버튼 예시 (폼 제출 등에서)
+        document.addEventListener('DOMContentLoaded', function() {
+            var addPostBtn = document.getElementById('addPostBtn');
+            if (addPostBtn) {
+                addPostBtn.onclick = async function() {
+                    const content = document.getElementById('newPostContent').value.trim();
+                    const accountId = document.getElementById('postAccount').value;
+                    if (!content) {
+                        alert('게시물 내용을 입력하세요.');
+                        return;
+                    }
+                    if (!accountId) {
+                        alert('계정을 선택하세요.');
+                        return;
+                    }
+                    await addPost({ content, accountId });
+                };
+            }
+            var accountForm = document.getElementById('accountForm');
+            if (accountForm) {
+                accountForm.onsubmit = async function(e) {
+                    e.preventDefault();
+                    if (editingAccountId) {
+                        await updateAccount(editingAccountId);
+                    } else {
+                        await addAccount();
+                    }
+                };
+            }
+            var postForm = document.getElementById('postForm');
+            if (postForm) {
+                postForm.onsubmit = async function(e) {
+                    e.preventDefault();
+                    if (editingPostId) {
+                        await updatePost(editingPostId);
+                    } else {
+                        const content = document.getElementById('newPostContent').value.trim();
+                        const accountId = document.getElementById('postAccount').value;
+                        await addPost({ content, accountId });
+                    }
+                };
+            }
+            var cancelEditBtn = document.getElementById('cancelEditBtn');
+            if (cancelEditBtn) cancelEditBtn.onclick = clearAccountForm;
+            // ... 기타 버튼도 모두 if (btn) ... 형태로만 연결
+        });
+
+        // 게시물 수정 (API 연동) - 계정 정보도 반영
+        async function updatePost(postId) {
+            const content = document.getElementById('newPostContent').value.trim();
+            const accountId = document.getElementById('postAccount').value;
+            if (!content) {
+                alert('게시물 내용을 입력하세요.');
+                return;
+            }
+            if (!accountId) {
+                alert('계정을 선택하세요.');
+                return;
+            }
+            const res = await fetch(`/api/posts/${postId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, accountId })
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert('게시물이 수정되었습니다.');
+                await loadAllAndUpdatePosts();
+                cancelEditPost();
+            } else {
+                alert('게시물 수정 실패');
+            }
+        }
+
+        // 게시물 리스트 렌더링 개선 (이미지 url, 계정명, 생성일, 상태 등 표시)
+        function updatePostList() {
+            const postList = document.getElementById('postList');
+            if (!Array.isArray(posts) || posts.length === 0) {
+                postList.innerHTML = `<p style="text-align: center; color: #666; font-style: italic;">아직 등록된 게시물이 없습니다.<br>위에서 게시물을 추가해보세요!</p>`;
+                return;
+            }
+            if (!accounts || accounts.length === 0) {
+                loadAccounts().then(updatePostList);
+                return;
+            }
+            postList.innerHTML = posts.map((post, idx) => {
+                const account = accounts.find(acc => acc.id === post.accountId);
+                const accountInfo = account ? `${account.name} (${account.username})` : '계정 정보 없음';
+                const createdAtText = post.createdAt ? new Date(post.createdAt).toLocaleString('ko-KR') : '날짜 없음';
+                let statusText = '대기중';
+                if (post.status === 'completed') statusText = '완료';
+                else if (post.status === 'failed') statusText = '실패';
+                else if (post.status === 'processing') statusText = '처리중';
+                else if (post.status) statusText = post.status;
+                // 이미지 표시 (url만 사용)
+                let imagesHtml = '';
+                if (post.images && post.images.length > 0) {
+                    imagesHtml = `<div style='margin-top:4px;'>` + post.images.map(img => `<img src='${img.url}' alt='이미지' style='width:60px;height:40px;object-fit:cover;margin-right:4px;border-radius:4px;'>`).join('') + `</div>`;
+                }
+                return `
+                    <div class="post-item">
+                        <div class="post-content">
+                            <h4>${post.content}</h4>
+                            <p>계정: ${accountInfo}</p>
+                            <p>상태: ${statusText} | 생성일: ${createdAtText}</p>
+                            ${imagesHtml}
+                        </div>
+                        <div class="post-actions">
+                            <button class="btn btn-secondary" onclick="editPost('${post.id}')">수정</button>
+                            <button class="btn btn-danger" onclick="deletePost('${post.id}')">삭제</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 게시물 수정 모드 진입
+        function editPost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            openEditPostModal(post);
+        }
+
+        // 게시물 수정 취소
+        function cancelEditPost() {
+            editingPostId = null;
+            document.getElementById('postForm').reset();
+            document.getElementById('addPostBtn').textContent = '➕ 게시물 추가';
+            document.getElementById('cancelEditPostBtn').style.display = 'none';
+        }
+
+        document.getElementById('cancelEditPostBtn').onclick = cancelEditPost;
+
+        document.getElementById('postForm').onsubmit = async function(e) {
+            e.preventDefault();
+            if (editingPostId) {
+                await updatePost(editingPostId);
+            } else {
+                await addPost({ content: document.getElementById('newPostContent').value.trim() });
+            }
+        };
+
+        // 게시물 필터/정렬/검색 함수 (항상 정의)
+        function getFilteredSortedPosts() {
+            if (!Array.isArray(posts)) return [];
+            let filtered = posts.slice();
+            if (typeof postFilter !== 'undefined') {
+                if (postFilter.status) filtered = filtered.filter(p => p.status === postFilter.status);
+                if (postFilter.dateStart) filtered = filtered.filter(p => p.createdAt && p.createdAt >= postFilter.dateStart);
+                if (postFilter.dateEnd) filtered = filtered.filter(p => p.createdAt && p.createdAt <= postFilter.dateEnd + 'T23:59:59');
+                if (postFilter.search) filtered = filtered.filter(p => p.content && p.content.includes(postFilter.search));
+                filtered.sort((a, b) => {
+                    if (postFilter.sort === 'desc') return (b.createdAt || '').localeCompare(a.createdAt || '');
+                    else return (a.createdAt || '').localeCompare(b.createdAt || '');
+                });
+            }
+            return filtered;
+        }
+
+        // 모든 JS 초기화 코드는 DOMContentLoaded 안에서 실행
+        // (아래 예시처럼 기존 초기화 코드 감싸기)
+        document.addEventListener('DOMContentLoaded', function() {
+            // 버튼 id 존재 시에만 이벤트 연결
+            var addPostBtn = document.getElementById('addPostBtn');
+            if (addPostBtn) {
+                addPostBtn.onclick = async function() {
+                    const content = document.getElementById('newPostContent').value.trim();
+                    const accountId = document.getElementById('postAccount').value;
+                    if (!content) {
+                        alert('게시물 내용을 입력하세요.');
+                        return;
+                    }
+                    if (!accountId) {
+                        alert('계정을 선택하세요.');
+                        return;
+                    }
+                    await addPost({ content, accountId });
+                };
+            }
+            // ... 나머지 초기화 코드 (이벤트 연결 등)
+        });
+
+        // editPost 함수는 반드시 전역에 정의되어야 함
+        window.editPost = editPost;
+
+        // 서버 API로 계정 추가 함수 (반드시 정의)
+        async function addAccountAPI(accountData) {
+            try {
+                const res = await fetch('/api/accounts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(accountData)
+                });
+                return await res.json();
+            } catch (error) {
+                alert('계정 추가 실패: 앱을 반드시 Electron(아이콘 더블클릭 또는 npm run electron)으로 실행하세요. 브라우저에서 직접 열면 동작하지 않습니다.');
+                return { success: false };
+            }
+        }
+
+        // (임시) localStorage에 남아있는 계정 데이터 완전 삭제
+        try { localStorage.removeItem('youtube_accounts'); } catch(e) {}
+
+        // 게시물도 서버 API로만 불러오기 (localStorage 코드 완전 제거)
+        async function loadPosts() {
+            try {
+                const res = await fetch('/api/posts');
+                if (!res.ok) throw new Error('게시물 목록 불러오기 실패');
+                posts = await res.json();
+                updatePostList();
+                if (posts.length > 0) {
+                    showStatus('info', `저장된 게시물 ${posts.length}개를 불러왔습니다! 💾`);
+                }
+            } catch (error) {
+                console.error('게시물 불러오기 실패:', error);
+                posts = [];
+            }
+        }
+
+        window.addAccount = addAccount;
+
+        // 게시물 목록과 계정 목록을 모두 불러온 뒤 게시물 리스트를 렌더링하는 함수
+        async function loadAllAndUpdatePosts() {
+            await loadAccounts();
+            await loadPosts();
+            updatePostList();
+        }
+
+        // 게시물 상태만 PATCH로 서버에 저장
+        async function patchPostStatus(postId, status) {
+            try {
+                const res = await fetch(`/api/posts/${postId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                return await res.json();
+            } catch (error) {
+                console.error('게시물 상태 PATCH 실패:', error);
+                return { success: false };
+            }
+        }
+    </script>
+</body>
+</html> 
